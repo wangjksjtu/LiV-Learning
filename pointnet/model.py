@@ -5,7 +5,7 @@ import os, sys
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(BASE_DIR, '../'))
 sys.path.append(os.path.join(BASE_DIR, 'nets'))
-from provider import Points_Provider
+from provider import DVR_Points_Provider
 from tensorflow.contrib import rnn
 from tensorflow.core.protobuf import saver_pb2
 from pointnet_cls import get_model as pointnet
@@ -29,7 +29,7 @@ class Model(object):
 
     def __init__(self, batch_size=32):
         #self.sess = tf.InteractiveSession()
-        self.x1 = tf.placeholder(tf.float32, shape=[batch_size, 66, 200])
+        self.x1 = tf.placeholder(tf.float32, shape=[batch_size, 66, 200, 3])
         self.x2 = tf.placeholder(tf.float32, shape=[batch_size, 16192, 3])
         self.y = None
         self.y_ = tf.placeholder(tf.float32, shape=[batch_size, 2])
@@ -172,7 +172,7 @@ class Model(object):
         train_step = tf.train.AdamOptimizer(lr).minimize(loss, self.global_step)
         sess = tf.InteractiveSession()
         sess.run(tf.global_variables_initializer())
-
+        data_input = DVR_Points_Provider()
 
         for epoch in range(epochs):
             loss_sum = ac1_sum_a = ac2_sum_a = ac3_sum_a = ac4_sum_a = ac5_sum_a = ac6_sum_a = ac1_sum_s = ac2_sum_s = ac3_sum_s = ac4_sum_s = count = 0
