@@ -214,7 +214,7 @@ class DVR_Points_Provider:
         with open(self.input_dir1 + filename) as f:
             for line in f:
                 self.xs1.append(self.input_dir1 + line.split()[0])
-                self.xs2.append(self.input_dir2 + line.split()[0])
+                self.xs2.append(self.input_dir2 + line.split()[0][:-4] + ".txt")
                 self.ys1.append((float(line.split()[1]) -20) / 20)
                 self.ys2.append(float(line.split()[2]) * scipy.pi / 180)
 
@@ -250,15 +250,15 @@ class DVR_Points_Provider:
                 index = (self.train_pointer + i) % len(self.train_xs1)
                 x_out1.append(scipy.misc.imresize(scipy.misc.imread(
                 self.train_xs1[index]), shape) / 255.0)
-                x_out2.append(np.loadtxt(self.train_xs2[index], delimiter=','))
+                x_out2.append(np.loadtxt(self.train_xs2[index], delimiter=',')[:,0:3])
                 y_out.append(self.train_ys[index])
                 self.train_pointer += batch_size
         else:
             for i in range(0, batch_size):
-                index = (self.val_pointer + i) % len(self.val_xs)
+                index = (self.val_pointer + i) % len(self.val_xs1)
                 x_out1.append(scipy.misc.imresize(scipy.misc.imread(
                 self.val_xs1[index]), shape) / 255.0)
-                x_out2.append(np.loadtxt(self.val_xs2[index], delimiter=','))
+                x_out2.append(np.loadtxt(self.val_xs2[index], delimiter=',')[:,0:3])
                 y_out.append(self.val_ys[index])
                 self.val_pointer += batch_size
         return np.stack(x_out1), np.stack(x_out2), np.stack(y_out)
@@ -277,13 +277,13 @@ class DVR_Points_Provider:
                 for i in range(index, len(self.val_xs1)):
                     xs1.append(scipy.misc.imresize(scipy.misc.imread(
                     self.val_xs1[i]), shape) / 255.0)
-                    xs2.append(np.loadtxt(self.val_xs2[i], delimiter=','))
+                    xs2.append(np.loadtxt(self.val_xs2[i], delimiter=',')[:,0:3])
                     ys.append(self.val_ys[i])
             else:
                 for i in range(0, batch_size):
                     xs1.append(scipy.misc.imresize(scipy.misc.imread(
                     self.val_xs1[index + i]), shape1) / 255.0)
-                    xs2.append(np.loadtxt(self.val_xs2[index + i], delimiter=','))
+                    xs2.append(np.loadtxt(self.val_xs2[index + i], delimiter=',')[:,0:3])
                     ys.append(self.val_ys[index + i])
                 index += batch_size
 

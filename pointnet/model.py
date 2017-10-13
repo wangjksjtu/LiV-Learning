@@ -90,8 +90,8 @@ class Model(object):
 
     def mlp_half_1024(self, h):
         # FCL 1
-        W_fc1 = weight_variable([1152, 1024])
-        b_fc1 = bias_variable_const([1024])
+        W_fc1 = weight_variable([1152, 512])
+        b_fc1 = bias_variable_const([512])
         h_flat = tf.reshape(h, [-1, 1152])
 
         h_fc1 = tf.nn.relu(tf.matmul(h_flat, W_fc1) + b_fc1)
@@ -101,7 +101,7 @@ class Model(object):
 
     def mlp_rest_2048(self, h):
         # FCL 3
-        W_fc3 = weight_variable([2048, 256])
+        W_fc3 = weight_variable([1024, 256])
         b_fc3 = bias_variable([256])
         h_fc3 = tf.nn.relu(tf.matmul(h, W_fc3) + b_fc3)
         h_fc3_drop = tf.nn.dropout(h_fc3, self.keep_prob)
@@ -159,7 +159,7 @@ class Model(object):
         y1 = self.mlp_half_1024(h1)
         st = tf.stack((y1, h2), axis=2)
         print st
-        merge = tf.reshape(st, (-1, 2048))
+        merge = tf.reshape(st, (-1, 1024))
         print merge.shape
         self.y = self.mlp_rest_2048(merge)
         return self.y
@@ -177,32 +177,32 @@ class Model(object):
         for epoch in range(epochs):
             loss_sum = ac1_sum_a = ac2_sum_a = ac3_sum_a = ac4_sum_a = ac5_sum_a = ac6_sum_a = ac1_sum_s = ac2_sum_s = ac3_sum_s = ac4_sum_s = count = 0
             for i in range(int(data_input.num_images/self.batch_size)):
-                xs, ys = data_input.LoadTrainBatch(self.batch_size)
-                train_step.run(feed_dict={self.x:xs, self.y_:ys, self.keep_prob: 0.8})
+                xs1, xs2, ys = data_input.load_one_batch(self.batch_size, Type='train')
+                train_step.run(feed_dict={self.x1:xs1, self.x2:xs2, self.y_:ys, self.keep_prob: 0.8})
                 if i % 10 == 0:
-                    xs, ys = data_input.LoadValBatch(self.batch_size)
+                    xs1, xs2, ys = data_input.load_one_batch(self.batch_size, Type='val')
 
-                    loss_v = loss.eval(feed_dict={self.x:xs, self.y_:ys, \
+                    loss_v = loss.eval(feed_dict={self.x1:xs1, self.x2:xs2, self.y_:ys, \
                             self.keep_prob: 1.0})
-                    ac1_v_a = ac1_a.eval(feed_dict={self.x:xs, self.y_:ys, \
+                    ac1_v_a = ac1_a.eval(feed_dict={self.x1:xs1, self.x2:xs2, self.y_:ys, \
                             self.keep_prob: 1.0})
-                    ac2_v_a = ac2_a.eval(feed_dict={self.x:xs, self.y_:ys, \
+                    ac2_v_a = ac2_a.eval(feed_dict={self.x1:xs1, self.x2:xs2, self.y_:ys, \
                             self.keep_prob: 1.0})
-                    ac3_v_a = ac3_a.eval(feed_dict={self.x:xs, self.y_:ys, \
+                    ac3_v_a = ac3_a.eval(feed_dict={self.x1:xs1, self.x2:xs2, self.y_:ys, \
                             self.keep_prob: 1.0})
-                    ac4_v_a = ac4_a.eval(feed_dict={self.x:xs, self.y_:ys, \
+                    ac4_v_a = ac4_a.eval(feed_dict={self.x1:xs1, self.x2:xs2, self.y_:ys, \
                             self.keep_prob: 1.0})
-                    ac5_v_a = ac5_a.eval(feed_dict={self.x:xs, self.y_:ys, \
+                    ac5_v_a = ac5_a.eval(feed_dict={self.x1:xs1, self.x2:xs2, self.y_:ys, \
                             self.keep_prob: 1.0})
-                    ac6_v_a = ac6_a.eval(feed_dict={self.x:xs, self.y_:ys, \
+                    ac6_v_a = ac6_a.eval(feed_dict={self.x1:xs1, self.x2:xs2, self.y_:ys, \
                             self.keep_prob: 1.0})
-                    ac1_v_s = ac1_s.eval(feed_dict={self.x:xs, self.y_:ys, \
+                    ac1_v_s = ac1_s.eval(feed_dict={self.x1:xs1, self.x2:xs2, self.y_:ys, \
                             self.keep_prob: 1.0})
-                    ac2_v_s = ac2_s.eval(feed_dict={self.x:xs, self.y_:ys, \
+                    ac2_v_s = ac2_s.eval(feed_dict={self.x1:xs1, self.x2:xs2, self.y_:ys, \
                             self.keep_prob: 1.0})
-                    ac3_v_s = ac3_s.eval(feed_dict={self.x:xs, self.y_:ys, \
+                    ac3_v_s = ac3_s.eval(feed_dict={self.x1:xs1, self.x2:xs2, self.y_:ys, \
                             self.keep_prob: 1.0})
-                    ac4_v_s = ac4_s.eval(feed_dict={self.x:xs, self.y_:ys, \
+                    ac4_v_s = ac4_s.eval(feed_dict={self.x1:xs1, self.x2:xs2, self.y_:ys, \
                             self.keep_prob: 1.0})
 
                     loss_sum += loss_v
@@ -227,7 +227,7 @@ class Model(object):
                     print ("ac2_s: " + str(ac2_v_s))
 
                 self.summary = self.merged_summary_op.eval(feed_dict={\
-                        self.x:xs, self.y_:ys, self.keep_prob:1.0})
+                        self.x1:xs1, self.x2:xs2, self.y_:ys, self.keep_prob:1.0})
                 self.summary_writer.add_summary(self.summary, \
                         epoch * data_input.num_images / self.batch_size + i)
 
@@ -268,28 +268,28 @@ class Model(object):
                 print "-------------------------------"
         '''
         xs, ys = data_input.LoadValAll()
-        loss_v = loss.eval(feed_dict={self.x:xs, self.y_:ys, \
+        loss_v = loss.eval(feed_dict={self.x1:xs1, self.x2:xs2, self.y_:ys, \
                 self.keep_prob: 1.0})
-        ac1_v_a = ac1_a.eval(feed_dict={self.x:xs, self.y_:ys, \
+        ac1_v_a = ac1_a.eval(feed_dict={self.x1:xs1, self.x2:xs2, self.y_:ys, \
                 self.keep_prob: 1.0})
-        ac2_v_a = ac2_a.eval(feed_dict={self.x:xs, self.y_:ys, \
+        ac2_v_a = ac2_a.eval(feed_dict={self.x1:xs1, self.x2:xs2, self.y_:ys, \
                 self.keep_prob: 1.0})
-        ac3_v_a = ac3_a.eval(feed_dict={self.x:xs, self.y_:ys, \
+        ac3_v_a = ac3_a.eval(feed_dict={self.x1:xs1, self.x2:xs2, self.y_:ys, \
                 self.keep_prob: 1.0})
-        ac4_v_a = ac4_a.eval(feed_dict={self.x:xs, self.y_:ys, \
+        ac4_v_a = ac4_a.eval(feed_dict={self.x1:xs1, self.x2:xs2, self.y_:ys, \
                 self.keep_prob: 1.0})
-        ac5_v_a = ac5_a.eval(feed_dict={self.x:xs, self.y_:ys, \
+        ac5_v_a = ac5_a.eval(feed_dict={self.x1:xs1, self.x2:xs2, self.y_:ys, \
                 self.keep_prob: 1.0})
-        ac6_v_a = ac6_a.eval(feed_dict={self.x:xs, self.y_:ys, \
+        ac6_v_a = ac6_a.eval(feed_dict={self.x1:xs1, self.x2:xs2, self.y_:ys, \
                 self.keep_prob: 1.0})
 
-        ac1_v_s = ac1_s.eval(feed_dict={self.x:xs, self.y_:ys, \
+        ac1_v_s = ac1_s.eval(feed_dict={self.x1:xs1, self.x2:xs2, self.y_:ys, \
                 self.keep_prob: 1.0})
-        ac2_v_s = ac2_s.eval(feed_dict={self.x:xs, self.y_:ys, \
+        ac2_v_s = ac2_s.eval(feed_dict={self.x1:xs1, self.x2:xs2, self.y_:ys, \
                 self.keep_prob: 1.0})
-        ac3_v_s = ac3_s.eval(feed_dict={self.x:xs, self.y_:ys, \
+        ac3_v_s = ac3_s.eval(feed_dict={self.x1:xs1, self.x2:xs2, self.y_:ys, \
                 self.keep_prob: 1.0})
-        ac4_v_s = ac4_s.eval(feed_dict={self.x:xs, self.y_:ys, \
+        ac4_v_s = ac4_s.eval(feed_dict={self.x1:xs1, self.x2:xs2, self.y_:ys, \
                 self.keep_prob: 1.0})
         print "-----------------------------"
         print "------------Final------------"
